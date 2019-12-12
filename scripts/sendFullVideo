@@ -1,0 +1,12 @@
+#!/bin/bash
+COUNTER=1
+PATH=/var/www/html/video/segmentos/
+BASE=dash_videoBBBrepMM500kbps_
+MPD=videobbb.mpd
+/usr/bin/uftp -M 230.4.4.1 -P 230.4.4.1 $PATH$MPD $PATH${BASE}init.mp4
+while [ $COUNTER -lt 112 ]; do
+        /usr/bin/uftp -M 230.4.4.1 -P 230.4.4.1 $PATH$BASE${COUNTER}.m4s
+	#sleep 0.1
+	let COUNTER+=1
+done
+

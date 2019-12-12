@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vnx xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="/usr/share/xml/vnx/vnx-2.00.xsd">
+  <global>
+    <version>2.0</version>
+    <scenario_name>tutorial_multicast_lan_ovs</scenario_name>
+    <automac offset="5"/>
+    <vm_mgmt type="none" />
+    <!--vm_mgmt type="private" network="10.250.0.0" mask="24" offset="16">
+       <host_mapping />
+    </vm_mgmt-->     
+    <vm_defaults>
+	    <console id="0" display="no"/>
+	    <console id="1" display="yes"/>
+	    
+    </vm_defaults>
+    
+  </global>
+  
+  <net name="s1" mode="openvswitch" controller="tcp:127.0.0.1:6653" of_version="OpenFlow13" fail_mode="secure" />
+  <net name="virbr0" mode="virtual_bridge" managed="no"/>
+  
+
+  <!-- NODES -->
+  <vm name="h1" type="lxc" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <mem>1G</mem>
+    <if id="1" net="s1" >
+      <ipv4>10.0.0.1/24</ipv4>
+    </if>
+    <if id="9" net="virbr0" >
+      <ipv4>192.168.122.11</ipv4>
+    </if>
+    <!--Configuracion inicial para servidores locales-->
+    <exec seq="on_boot" type="verbatim" ostype="system">ip route add 224.0.0.0/4 dev eth1</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/dash.js-2.9.2</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video/segmentos</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/scripts</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/librerias</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chmod g+r -R /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chgrp -R www-data /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">service apache2 restart</exec>
+    
+    <filetree seq="on_boot" root="/var/www/html/dash.js-2.9.2/">/home/upm/files/dash.js-2.9.2/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/librerias/">/home/upm/files/librerias/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/scripts/" perms="777">/home/upm/scripts/</filetree>
+    
+    <exec seq="join-multicast" type="verbatim" ostype="system">uftpd -D /var/www/html/video/segmentos/</exec>
+    <exec seq="ping-server"    type="verbatim" ostype="system">ping 10.0.0.3 -c  4</exec> 
+    <exec seq="ssmping-client"    type="verbatim" ostype="system">ssmping 10.0.0.3 -c  4</exec>    
+    <exec seq="clean-video"    type="verbatim" ostype="system">sudo rm -r /var/www/html/video/segmentos/*</exec>
+    
+    <filetree seq="update-dash" root="/var/www/html/dash.js-2.9.2/">/home/upm/files/dash.js-2.9.2/</filetree>
+  </vm>
+  
+  <vm name="h2" type="lxc" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <mem>1G</mem>
+    <if id="1" net="s1" >
+      <ipv4>10.0.0.2/24</ipv4>
+    </if>
+    <if id="9" net="virbr0" >
+      <ipv4>192.168.122.12</ipv4>
+    </if>
+    
+    <!--Configuracion inicial para servidores locales-->
+    <exec seq="on_boot" type="verbatim" ostype="system">ip route add 224.0.0.0/4 dev eth1</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/dash.js-2.9.2</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video/segmentos</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/scripts</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/librerias</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chmod g+r -R /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chgrp -R www-data /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">service apache2 restart</exec>
+    
+    <filetree seq="on_boot" root="/var/www/html/dash.js-2.9.2/">/home/upm/files/dash.js-2.9.2/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/librerias/">/home/upm/files/librerias/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/scripts/" perms="777">/home/upm/scripts/</filetree>
+    
+    <exec seq="join-multicast" type="verbatim" ostype="system">uftpd -D /var/www/html/video/segmentos/</exec>
+    <exec seq="ping-server"    type="verbatim" ostype="system">ping 10.0.0.3 -c  4</exec>
+    <exec seq="clean-video"    type="verbatim" ostype="system">sudo rm -r /var/www/html/video/segmentos/*</exec> 
+    
+  </vm>
+  
+  <vm name="h4" type="lxc" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <mem>1G</mem>
+    <if id="1" net="s1" >
+      <ipv4>10.0.0.4/24</ipv4>
+    </if>
+    <if id="9" net="virbr0" >
+      <ipv4>192.168.122.14</ipv4>
+    </if>
+    <!--Configuracion inicial para servidores locales-->
+    <exec seq="on_boot" type="verbatim" ostype="system">ip route add 224.0.0.0/4 dev eth1</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/dash.js-2.9.2</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video/segmentos</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/scripts</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/librerias</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chmod g+r -R /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chgrp -R www-data /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">service apache2 restart</exec>
+    
+    <filetree seq="on_boot" root="/var/www/html/dash.js-2.9.2/">/home/upm/files/dash.js-2.9.2/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/librerias/">/home/upm/files/librerias/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/scripts/" perms="777">/home/upm/scripts/</filetree>
+    
+    <exec seq="join-multicast" type="verbatim" ostype="system">uftpd -D /var/www/html/video/segmentos/</exec>
+    <exec seq="ping-server"    type="verbatim" ostype="system">ping 10.0.0.3 -c  4</exec>
+    <exec seq="clean-video"    type="verbatim" ostype="system">sudo rm -r /var/www/html/video/segmentos/*</exec> 
+    
+  </vm>
+  
+  <vm name="h5" type="lxc" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <mem>1G</mem>
+    <if id="1" net="s1" >
+      <ipv4>10.0.0.5/24</ipv4>
+    </if>
+    <if id="9" net="virbr0" >
+      <ipv4>192.168.122.15</ipv4>
+    </if>
+    <!--Configuracion inicial para servidores locales-->
+    <exec seq="on_boot" type="verbatim" ostype="system">ip route add 224.0.0.0/4 dev eth1</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/dash.js-2.9.2</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video/segmentos</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/scripts</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/librerias</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chmod g+r -R /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chgrp -R www-data /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">service apache2 restart</exec>
+    
+    <filetree seq="on_boot" root="/var/www/html/dash.js-2.9.2/">/home/upm/files/dash.js-2.9.2/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/librerias/">/home/upm/files/librerias/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/scripts/" perms="777">/home/upm/scripts/</filetree>
+    
+    <exec seq="join-multicast" type="verbatim" ostype="system">uftpd -D /var/www/html/video/segmentos/</exec>
+    <exec seq="ping-server"    type="verbatim" ostype="system">ping 10.0.0.3 -c  4</exec>
+    <exec seq="clean-video"    type="verbatim" ostype="system">sudo rm -r /var/www/html/video/segmentos/*</exec> 
+    
+  </vm>
+  
+    <vm name="h6" type="lxc" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <mem>1G</mem>
+    <if id="1" net="s1" >
+      <ipv4>10.0.0.6/24</ipv4>
+    </if>
+    <if id="9" net="virbr0" >
+      <ipv4>192.168.122.16</ipv4>
+    </if>
+    <!--Configuracion inicial para servidores locales-->
+    <exec seq="on_boot" type="verbatim" ostype="system">ip route add 224.0.0.0/4 dev eth1</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/dash.js-2.9.2</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video/segmentos</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/scripts</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/librerias</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chmod g+r -R /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chgrp -R www-data /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">service apache2 restart</exec>
+    
+    <filetree seq="on_boot" root="/var/www/html/dash.js-2.9.2/">/home/upm/files/dash.js-2.9.2/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/librerias/">/home/upm/files/librerias/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/scripts/" perms="777">/home/upm/scripts/</filetree>
+    
+    <exec seq="join-multicast" type="verbatim" ostype="system">uftpd -D /var/www/html/video/segmentos/</exec>
+    <exec seq="ping-server"    type="verbatim" ostype="system">ping 10.0.0.3 -c  4</exec>
+    <exec seq="clean-video"    type="verbatim" ostype="system">sudo rm -r /var/www/html/video/segmentos/*</exec> 
+    
+  </vm>
+  
+  <vm name="server" type="lxc" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <mem>1G</mem>
+    <if id="1" net="s1" >
+      <ipv4>10.0.0.3/24</ipv4>
+    </if>
+    <if id="9" net="virbr0" >
+      <ipv4>192.168.122.13</ipv4>
+    </if>
+    <!--Configuracion inicial para servidores locales-->
+    <exec seq="on_boot" type="verbatim" ostype="system">ip route add 224.0.0.0/4 dev eth1</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/dash.js-2.9.2</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /var/www/html/video/segmentos</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chmod g+r -R /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">sudo chgrp -R www-data /var/www/html/</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">service apache2 restart</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/scripts</exec>
+    <exec seq="on_boot" type="verbatim" ostype="system">mkdir /home/ubuntu/librerias</exec>
+    
+    <!--Copia de ficheros-->
+    <filetree seq="on_boot" root="/var/www/html/video/segmentos/">/home/upm/files/segmentos/</filetree>
+    <filetree seq="on_boot" root="/var/www/html/dash.js-2.9.2/">/home/upm/files/dash.js-2.9.2/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/scripts/" perms="777">/home/upm/scripts/</filetree>
+    <filetree seq="on_boot" root="/home/ubuntu/librerias/">/home/upm/files/librerias/</filetree>
+    
+    <!--Iniciar envio de paquetes-->
+    <exec seq="send-video" type="verbatim" ostype="xexec">/home/ubuntu/scripts/./sendALL</exec>
+    <exec seq="sendFULL-video" type="verbatim" ostype="xexec">/home/ubuntu/scripts/./sendFullVideo</exec>
+    <exec seq="ssmping-server"    type="verbatim" ostype="system">ssmpingd</exec> 
+
+  </vm>
+  
+  <host>
+    <hostif net="s1">
+      <ipv4>10.0.0.7/24</ipv4>
+    </hostif>
+  </host>
+  
+</vnx>
+
